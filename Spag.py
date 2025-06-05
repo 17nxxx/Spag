@@ -8,7 +8,7 @@ pygame.init()
 
 # Создание экрана
 screen_width = 800
-screen_height = 600
+screen_height =600
 screen = pygame.display.set_mode((screen_width, screen_height))
 pygame.display.set_caption("Космический стрелок")
 
@@ -48,6 +48,10 @@ bullet_cooldown = 10
 enemies = []
 enemy_speed = 1
 enemy_spawn_timer = 0
+
+# Пули босса
+boss_bullets=[]
+boss_bullet_speed = 15
 
 # Босс
 boss_x = 300
@@ -123,18 +127,21 @@ def spawn_powerup(x, y):
 def draw_powerups():
     for powerup in powerups:
         if powerup[2] == 'health':
-            pygame.draw.rect(screen, (255, 0, 0), (powerup[0], powerup[1], 30, 30))
+            pygame.draw.rect(screen, (255, 0, 0), (powerup[0], powerup[1], 20, 20))
         elif powerup[2] == 'speed':
-            pygame.draw.rect(screen, (0, 255, 0), (powerup[0], powerup[1], 30, 30))
+            pygame.draw.rect(screen, (0, 255, 0), (powerup[0], powerup[1], 20, 20))
         else:
-            pygame.draw.rect(screen, (0, 0, 255), (powerup[0], powerup[1], 30, 30))
+            pygame.draw.rect(screen, (0, 0, 255), (powerup[0], powerup[1], 20, 20))
 
 
 def show_game_over():
-    game_over_text = big_font.render("ИГРА ОКОНЧЕНА", True, (255, 0, 0))
+    game_over_text = big_font.render("ИГРА ОКОНЧЕНА", True, (255, 255, 255))
     screen.blit(game_over_text, (200, 250))
     final_score_text = font.render(f"Финальный счет: {score}", True, (255, 255, 255))
     screen.blit(final_score_text, (250, 320))
+def draw_boss_bullets():
+    for bullet in boss_bullets:
+        screen.blit(bullet_img, (bullet[0], bullet[1]))
 
 
 # Основной игровой цикл
@@ -169,13 +176,13 @@ while running:
     if not game_over:
         # Управление игроком
         keys = pygame.key.get_pressed()
-        if keys[pygame.K_LEFT] and player_x > 0:
+        if keys[pygame.K_a] and player_x > 0:
             player_x -= player_speed
-        if keys[pygame.K_RIGHT] and player_x < screen_width - 64:
+        if keys[pygame.K_d] and player_x < screen_width - 64:
             player_x += player_speed
-        if keys[pygame.K_UP] and player_y > 0:
+        if keys[pygame.K_w] and player_y > 0:
             player_y -= player_speed
-        if keys[pygame.K_DOWN] and player_y < screen_height - 64:
+        if keys[pygame.K_s] and player_y < screen_height - 64:
             player_y += player_speed
 
         # Охлаждение пуль
@@ -203,7 +210,7 @@ while running:
                         game_over = True
 
             # Проверка столкновения с игроком
-            if check_collision(player_x, player_y, enemy[0], enemy[1], 64, 64):
+            if check_collision(player_x, player_y, enemy[0], enemy[1], 15, 45):
                 explosion_sound.play()
                 enemies.remove(enemy)
                 player_health -= 20
@@ -224,7 +231,7 @@ while running:
 
             # Проверка попадания во врага
             for enemy in enemies[:]:
-                if check_collision(bullet[0], bullet[1], enemy[0], enemy[1], 32, 64):
+                if check_collision(bullet[0], bullet[1], enemy[0], enemy[1], 15, 45):
                     explosion_sound.play()
                     bullets.remove(bullet)
                     enemies.remove(enemy)
@@ -242,7 +249,7 @@ while running:
         if boss_active:
             # Движение босса
             boss_x += boss_speed
-            if boss_x <= 0 or boss_x >= screen_width - 128:
+            if boss_y <= 0 or boss_x >= screen_width - 128:
                 boss_speed *= -1
 
             # Отрисовка босса
@@ -254,10 +261,32 @@ while running:
 
             # Атака босса
             boss_attack_timer += 1
-            if boss_attack_timer >= 120:
-                for i in range(3):
-                    bullets.append([boss_x + 64, boss_y + 128])
+            if boss_attack_timer >= 60:  # Атака каждую секунду
+                # Босс стреляет вниз (в сторону игрока)
+                boss_bullets.append([boss_x + 64, boss_y + 128])
                 boss_attack_timer = 0
+
+            # Движение пуль босса
+            for bullet in boss_bullets[:]:
+                bullet[1] += boss_bullet_speed  # Пули летят вниз
+                if bullet[1] > screen_height:
+                    boss_bullets.remove(bullet)
+                    continue
+
+                    # Проверка попадания в игрока
+                    if check_collision(bullet[0], bullet[1], player_x, player_y, 15, 45):
+                        explosion_sound.play()
+                        boss_bullets.remove(bullet)
+                        player_health -= 15
+                        if player_health <= 0:
+                            player_lives -= 1
+                            player_health = 100
+                            if player_lives <= 0:
+                                game_over = True
+
+                if bullet[1] < -32:
+                    bullets.remove(bullet)
+                    continue
 
             # Проверка попадания пуль в босса
             for bullet in bullets[:]:

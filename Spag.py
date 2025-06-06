@@ -8,18 +8,16 @@ pygame.init()
 
 # Создание экрана
 screen_width = 800
-screen_height =600
+screen_height = 600
 screen = pygame.display.set_mode((screen_width, screen_height))
 pygame.display.set_caption("Космический стрелок")
 
 # Загрузка изображений
-player_img = pygame.image.load('music/boat.png')  # Создайте или найдите изображение
-enemy_img = pygame.image.load('music/enemy.png')  # 64x64 пикселя
-bullet_img = pygame.image.load('music/bullet (1).png')  # 32x32 пикселя
-boss_img = pygame.image.load('music/boss.png')  # 128x128 пикселя
+player_img = pygame.image.load('music/boat.png')
+enemy_img = pygame.image.load('music/enemy.png')
+bullet_img = pygame.image.load('music/bullet (1).png')
+boss_img = pygame.image.load('music/boss.png')
 background_img = pygame.image.load('music/back.jpg')
-
-# Масштабирование фона
 background_img = pygame.transform.scale(background_img, (screen_width, screen_height))
 
 # Загрузка звуков
@@ -39,19 +37,19 @@ level = 1
 game_over = False
 boss_active = False
 
-# Пули
+# Пули игрока
 bullets = []
 bullet_speed = 30
 bullet_cooldown = 10
+
+# Пули босса
+boss_bullets = []
+boss_bullet_speed = 15
 
 # Враги
 enemies = []
 enemy_speed = 1
 enemy_spawn_timer = 0
-
-# Пули босса
-boss_bullets=[]
-boss_bullet_speed = 15
 
 # Босс
 boss_x = 300
@@ -114,6 +112,11 @@ def draw_bullets():
         screen.blit(bullet_img, (bullet[0], bullet[1]))
 
 
+def draw_boss_bullets():
+    for bullet in boss_bullets:
+        screen.blit(bullet_img, (bullet[0], bullet[1]))
+
+
 def check_collision(obj1_x, obj1_y, obj2_x, obj2_y, obj1_size, obj2_size):
     distance = math.sqrt((obj1_x - obj2_x) ** 2 + (obj1_y - obj2_y) ** 2)
     return distance < (obj1_size + obj2_size)
@@ -139,9 +142,6 @@ def show_game_over():
     screen.blit(game_over_text, (200, 250))
     final_score_text = font.render(f"Финальный счет: {score}", True, (255, 255, 255))
     screen.blit(final_score_text, (250, 320))
-def draw_boss_bullets():
-    for bullet in boss_bullets:
-        screen.blit(bullet_img, (bullet[0], bullet[1]))
 
 
 # Основной игровой цикл
@@ -171,6 +171,7 @@ while running:
                 boss_active = False
                 enemies.clear()
                 bullets.clear()
+                boss_bullets.clear()
                 powerups.clear()
 
     if not game_over:
@@ -220,11 +221,9 @@ while running:
                     if player_lives <= 0:
                         game_over = True
 
-        # Движение пуль
+        # Движение пуль игрока
         for bullet in bullets[:]:
-            bullet[1] -= bullet_speed  # Пули летят вверх
-
-
+            bullet[1] -= bullet_speed
             if bullet[1] < -32:
                 bullets.remove(bullet)
                 continue
@@ -249,7 +248,7 @@ while running:
         if boss_active:
             # Движение босса
             boss_x += boss_speed
-            if boss_y <= 0 or boss_x >= screen_width - 128:
+            if boss_x <= 0 or boss_x >= screen_width - 128:
                 boss_speed *= -1
 
             # Отрисовка босса
@@ -273,24 +272,21 @@ while running:
                     boss_bullets.remove(bullet)
                     continue
 
-                    # Проверка попадания в игрока
-                    if check_collision(bullet[0], bullet[1], player_x, player_y, 15, 45):
-                        explosion_sound.play()
-                        boss_bullets.remove(bullet)
-                        player_health -= 15
-                        if player_health <= 0:
-                            player_lives -= 1
-                            player_health = 100
-                            if player_lives <= 0:
-                                game_over = True
+                # Проверка попадания в игрока
+                if check_collision(bullet[0], bullet[1], player_x, player_y, 15, 45):
+                    explosion_sound.play()
+                    boss_bullets.remove(bullet)
+                    player_health -= 15
+                    if player_health <= 0:
+                        player_lives -= 1
+                        player_health = 100
+                        if player_lives <= 0:
+                            game_over = True
 
-                if bullet[1] < -32:
-                    bullets.remove(bullet)
-                    continue
-
-            # Проверка попадания пуль в босса
+            # Проверка попадания пуль игрока в босса
             for bullet in bullets[:]:
                 if check_collision(bullet[0], bullet[1], boss_x + 64, boss_y + 64, 32, 128):
+                    explosion_sound.play()
                     bullets.remove(bullet)
                     boss_health -= 5
                     if boss_health <= 0:
@@ -298,8 +294,6 @@ while running:
                         boss_active = False
                         score += 200
                         level += 1
-
-                        # Спавн улучшения за победу над боссом
                         spawn_powerup(boss_x + 64, boss_y + 64)
 
         # Улучшения
@@ -324,6 +318,7 @@ while running:
     # Отрисовка игровых объектов
     draw_enemies()
     draw_bullets()
+    draw_boss_bullets()
     draw_powerups()
     player(player_x, player_y)
     show_score()

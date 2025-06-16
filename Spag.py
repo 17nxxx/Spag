@@ -7,28 +7,28 @@ from pygame import mixer
 pygame.init()
 
 # Создание экрана
-screen_width = 800
-screen_height = 600
+screen_width = 1200
+screen_height = 800
 screen = pygame.display.set_mode((screen_width, screen_height))
 pygame.display.set_caption("Космический стрелок")
 
 # Загрузка изображений
-player_img = pygame.image.load('music/boat.png')
+player_img = pygame.image.load('music/boat1.png')
 enemy_img = pygame.image.load('music/enemy.png')
 bullet_img = pygame.image.load('music/bullet (1).png')
 boss_img = pygame.image.load('music/boss.png')
-background_img = pygame.image.load('music/back.jpg')
+background_img = pygame.image.load('music/back (2).png')
 background_img = pygame.transform.scale(background_img, (screen_width, screen_height))
 
 # Загрузка звуков
 mixer.music.load('music/spaceice.wav')
-mixer.music.set_volume(0.3)
+mixer.music.set_volume(0.9)
 laser_sound = mixer.Sound('music/laser.wav')
 explosion_sound = mixer.Sound('music/explos.wav')
 
 # Игровые переменные
-player_x = 370
-player_y = 480
+player_x = 500
+player_y = 600
 player_speed = 10
 player_health = 100
 player_lives = 3
@@ -63,8 +63,8 @@ powerups = []
 powerup_types = ['health', 'speed', 'double_shot']
 
 # Шрифты
-font = pygame.font.SysFont('Arial', 32)
-big_font = pygame.font.SysFont('Arial', 64)
+font = pygame.font.SysFont('Britannic Bold', 32)
+big_font = pygame.font.SysFont('Centaur', 64)
 
 
 def show_score():
@@ -211,7 +211,7 @@ while running:
                         game_over = True
 
             # Проверка столкновения с игроком
-            if check_collision(player_x, player_y, enemy[0], enemy[1], 15, 45):
+            if check_collision(player_x, player_y, enemy[0], enemy[1], 25, 45):
                 explosion_sound.play()
                 enemies.remove(enemy)
                 player_health -= 20
@@ -273,7 +273,7 @@ while running:
                     continue
 
                 # Проверка попадания в игрока
-                if check_collision(bullet[0], bullet[1], player_x, player_y, 15, 45):
+                if check_collision(bullet[0], bullet[1], player_x, player_y, 10, 45):
                     explosion_sound.play()
                     boss_bullets.remove(bullet)
                     player_health -= 15
@@ -299,7 +299,7 @@ while running:
         # Улучшения
         for powerup in powerups[:]:
             powerup[1] += 2
-            if check_collision(player_x, player_y, powerup[0], powerup[1], 64, 30):
+            if check_collision(player_x, player_y, powerup[0], powerup[1], 44, 30):
                 if powerup[2] == 'health':
                     player_health = min(100, player_health + 30)
                 elif powerup[2] == 'speed':
